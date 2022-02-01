@@ -3,6 +3,7 @@ const {
     getMovies,
     createMovie,
     //addScreening
+    getMovieByIdOrName
 } = require('../controllers/movie');
 
 const router = express.Router();
@@ -15,5 +16,7 @@ router.get("/", getMovies);
 
 router.post("/create", createMovie);
 //router.put("/addScreening", addScreening);
+
+router.get("/:idOrName", getMovieByIdOrName);
 
 module.exports = router;

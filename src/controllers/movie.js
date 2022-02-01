@@ -1,4 +1,7 @@
+const { parse } = require('dotenv');
 const prisma = require('../utils/prisma');
+
+//const controller = new AbortController();
 
 const getMovies = async (req, res) => {
     //console.log("Query:", req.query);
@@ -13,7 +16,7 @@ const getMovies = async (req, res) => {
             include: {
                 screenings: true
             }
-        })
+        });
         //console.log("Filtered:", filteredMovies);
         res.json({ data: filteredMovies })
     }
@@ -28,7 +31,7 @@ const getMovies = async (req, res) => {
             include: {
                 screenings: true
             }
-        })
+        });
         //console.log("Filtered:", filteredMovies);
         res.json({ data: filteredMovies })
     }
@@ -43,7 +46,7 @@ const getMovies = async (req, res) => {
             include: {
                 screenings: true
             }
-        })
+        });
         //console.log("Filtered:", filteredMovies);
         res.json({ data: filteredMovies })
     }
@@ -59,7 +62,7 @@ const getMovies = async (req, res) => {
             include: {
                 screenings: true
             }
-        })
+        });
         //console.log("Filtered:", filteredMovies);
         res.json({ data: filteredMovies })
     }
@@ -84,13 +87,16 @@ const createMovie = async (req, res) => {
 
     const existingMovie = await prisma.movie.findMany({
         where: {
-            title: title
+            title: {
+                equals: title,
+                mode: 'insensitive'
+            }
         }
     });
 
     try {
         if(existingMovie){
-            throw "Movie title already exists in database"
+            throw "Movie title already exists in database";
         }
         else{
             const createdMovie = await prisma.movie.create({
@@ -104,7 +110,7 @@ const createMovie = async (req, res) => {
                         }
                     } : {}
                 }
-            })
+            });
     
             console.log("Created Movie:", createdMovie);
             res.json({ data: createdMovie })
@@ -120,8 +126,41 @@ const createMovie = async (req, res) => {
 
 // }
 
+const getMovieByIdOrName = async (req, res) => {
+    console.log("Parameters:", req.params);
+    const { idOrName } = req.params;
+
+    const movieFound = await prisma.movie.findMany({
+        where: {
+            OR: [
+                    {
+                        title: {
+                            equals: idOrName,
+                            mode: 'insensitive'
+                        }
+                    },
+                    {
+                        id: {
+                            equals: isNaN(parseInt(idOrName)) ? 0 : parseInt(idOrName)
+                        }
+                    }
+            ]
+        }
+    });
+
+    if(movieFound.length === 0){
+        console.log("Movie not found in database");
+        //controller.abort();
+    }
+    else{
+        console.log("Movie Found:", movieFound);
+        res.json({ data: movieFound });
+    }
+}
+
 module.exports = {
     getMovies, 
-    createMovie
+    createMovie,
     //addScreening
+    getMovieByIdOrName
 }
