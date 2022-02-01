@@ -1,6 +1,5 @@
 const prisma = require('../utils/prisma');
 
-
 const getMovies = async (req, res) => {
     //console.log("Query:", req.query);
     //exact minutes
@@ -76,6 +75,53 @@ const getMovies = async (req, res) => {
     }
 }
 
+const createMovie = async (req, res) => {
+    console.log(req.body);
+    const {
+        title,
+        runtimeMins
+    } = req.body;
+
+    const existingMovie = await prisma.movie.findMany({
+        where: {
+            title: title
+        }
+    });
+
+    try {
+        if(existingMovie){
+            throw "Movie title already exists in database"
+        }
+        else{
+            const createdMovie = await prisma.movie.create({
+                data: {
+                    title,
+                    runtimeMins,
+                    screenings: req.screenings? 
+                    {
+                        createMany: {
+                            data: req.screenings
+                        }
+                    } : {}
+                }
+            })
+    
+            console.log("Created Movie:", createdMovie);
+            res.json({ data: createdMovie })
+        }
+    }
+    catch (error) {
+        console.log(error);
+    }
+}
+
+
+// const addScreening = async (req, res) => {
+
+// }
+
 module.exports = {
-    getMovies    
+    getMovies, 
+    createMovie
+    //addScreening
 }
