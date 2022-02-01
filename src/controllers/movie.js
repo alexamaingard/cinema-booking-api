@@ -1,14 +1,11 @@
 const { parse } = require('dotenv');
+const { screening } = require('../utils/prisma');
 const prisma = require('../utils/prisma');
 
 //const controller = new AbortController();
 
 const getMoviesByRuntime = async (req, res) => {
     console.log("Query:", req.query);
-    // if(!req.query){
-    //     const response = await getMovies(req, res);
-    //     res.json(response);
-    // }
 
     if(req.query.min){
         console.log("Get by exact runtime");
@@ -61,7 +58,7 @@ const getMoviesByRuntime = async (req, res) => {
         console.log("Filtered:", filteredMovies);
         res.json({ data: filteredMovies })
     }
-    else if(req.query.lt && req.query.gt){
+    else{
         console.log("Get by less than- and greater than-runtime");
         
         const filteredMovies = await prisma.movie.findMany({
@@ -90,7 +87,7 @@ const getMoviesByRuntime = async (req, res) => {
     }
 }
 
-const getMovies = async (req, res) => {
+const getAllMovies = async (req, res) => {
     const movies = await prisma.movie.findMany({
         include: {
             screenings: true
@@ -102,7 +99,6 @@ const getMovies = async (req, res) => {
 }
 
 const createMovie = async (req, res) => {
-    console.log(req.body);
     const {
         title,
         runtimeMins
@@ -144,12 +140,7 @@ const createMovie = async (req, res) => {
     }
 }
 
-
-// const addScreening = async (req, res) => {
-
-// }
-
-const getMovieByIdOrName = async (req, res) => {
+const findMovieByIdOrName = async (req) => {
     console.log("Parameters:", req.params);
     const { idOrName } = req.params;
 
@@ -168,8 +159,17 @@ const getMovieByIdOrName = async (req, res) => {
                         }
                     }
             ]
+        },
+        include: {
+            screenings: true
         }
     });
+
+    return movieFound;
+}
+
+const getMovieByIdOrName = async (req, res) => {
+    const movieFound = await findMovieByIdOrName(req);
 
     if(movieFound.length === 0){
         console.log("Movie not found in database");
@@ -181,10 +181,65 @@ const getMovieByIdOrName = async (req, res) => {
     }
 }
 
+const updateMovieById = async (req, res) => {
+    const { id } = req.params;
+    const { title, runtimeMins, screenings } = req.body;
+
+    try{
+        const movieToUpdate = await findMovieByIdOrName(req); 
+
+        if(movieToUpdate){
+            if(screenings){
+                console.log("Screenings found");
+
+                for(let i = 0; i < screenings.length; i++){
+                    const updatedScreening = await prisma.screening.update({
+                        where: {
+                            id: screenings[i].id
+                        },
+                        data: {
+                            screenId: screenings[i].screenId,
+                            startsAt: screenings[i].startsAt
+                        }
+                    });
+                    console.log("Updated Screening", updatedScreening);
+                }
+            }
+
+            const updatedMovie = await prisma.movie.update({
+                where: {
+                    id: parseInt(id)
+                },
+                data: {
+                    title: title? title : movieToUpdate.title,
+                    runtimeMins: runtimeMins? runtimeMins : movieToUpdate.runtimeMins
+                },
+                include: {
+                    screenings: true
+                }
+            });
+            
+            console.log("Updated Movie:", updatedMovie);
+            res.json({ data: updatedMovie });
+        }
+        else {
+            throw "Movie to update not found.";
+        }
+    }
+    catch(error){
+        console.log(error);
+    }
+}
+
+const createScreen = async (req, res) => {
+    console.log("Connected");
+}
+
 module.exports = {
-    getMovies, 
+    getAllMovies, 
     createMovie,
     getMoviesByRuntime,
-    //addScreening
-    getMovieByIdOrName
+    getMovieByIdOrName,
+    updateMovieById,
+    createScreen
 }
