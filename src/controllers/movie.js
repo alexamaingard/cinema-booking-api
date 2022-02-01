@@ -233,6 +233,26 @@ const updateMovieById = async (req, res) => {
 
 const createScreen = async (req, res) => {
     console.log("Connected");
+    const { number } = req.body;
+
+    const createdScreen = await prisma.screen.create({
+        data: {
+            number: number,
+            screenings: req.body.screenings? 
+            {
+                createMany: {
+                    data: req.body.screenings
+                }
+            } : {}
+        },
+        include: {
+            screenings: true
+        }
+    });
+    console.log("Created Screen:", createdScreen);
+
+    res.json({ data: createdScreen });
+
 }
 
 module.exports = {
