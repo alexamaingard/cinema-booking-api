@@ -3,10 +3,16 @@ const prisma = require('../utils/prisma');
 
 //const controller = new AbortController();
 
-const getMovies = async (req, res) => {
-    //console.log("Query:", req.query);
-    //exact minutes
+const getMoviesByRuntime = async (req, res) => {
+    console.log("Query:", req.query);
+    // if(!req.query){
+    //     const response = await getMovies(req, res);
+    //     res.json(response);
+    // }
+
     if(req.query.min){
+        console.log("Get by exact runtime");
+        
         const filteredMovies = await prisma.movie.findMany({
             where: {
                 runtimeMins: {
@@ -17,11 +23,13 @@ const getMovies = async (req, res) => {
                 screenings: true
             }
         });
-        //console.log("Filtered:", filteredMovies);
+        
+        console.log("Filtered:", filteredMovies);
         res.json({ data: filteredMovies })
     }
-    //less than minutes
     else if(req.query.lt){
+        console.log("Get by less than-runtime");
+        
         const filteredMovies = await prisma.movie.findMany({
             where: {
                 runtimeMins: {
@@ -32,11 +40,13 @@ const getMovies = async (req, res) => {
                 screenings: true
             }
         });
-        //console.log("Filtered:", filteredMovies);
+        
+        console.log("Filtered:", filteredMovies);
         res.json({ data: filteredMovies })
     }
-    //greater than minutes
     else if(req.query.gt){
+        console.log("Get by greater than-runtime");
+        
         const filteredMovies = await prisma.movie.findMany({
             where: {
                 runtimeMins: {
@@ -47,35 +57,48 @@ const getMovies = async (req, res) => {
                 screenings: true
             }
         });
-        //console.log("Filtered:", filteredMovies);
+        
+        console.log("Filtered:", filteredMovies);
         res.json({ data: filteredMovies })
     }
-    //more than and less than
     else if(req.query.lt && req.query.gt){
+        console.log("Get by less than- and greater than-runtime");
+        
         const filteredMovies = await prisma.movie.findMany({
             where: {
-                runtimeMins: {
-                    lt: parseInt(req.quert.lt),
-                    gt: parseInt(req.query.gt)
-                }
+                AND: [
+                    {
+                        runtimeMins: {
+                            lt: parseInt(req.quert.lt)
+                        }
+                    },
+                    {
+                        runtimeMins: {
+                            gt: parseInt(req.quert.gt)
+                        }
+                    }
+                ]
+
             },
             include: {
                 screenings: true
             }
         });
-        //console.log("Filtered:", filteredMovies);
+        
+        console.log("Filtered:", filteredMovies);
         res.json({ data: filteredMovies })
     }
-    //no filters
-    else{
-        const movies = await prisma.movie.findMany({
-            include: {
-                screenings: true
-            }
-        });
-        //console.log("Movies:", movies);
-        res.json({ data: movies });
-    }
+}
+
+const getMovies = async (req, res) => {
+    const movies = await prisma.movie.findMany({
+        include: {
+            screenings: true
+        }
+    });
+
+    console.log("Movies:", movies);
+    res.json({ data: movies });
 }
 
 const createMovie = async (req, res) => {
@@ -161,6 +184,7 @@ const getMovieByIdOrName = async (req, res) => {
 module.exports = {
     getMovies, 
     createMovie,
+    getMoviesByRuntime,
     //addScreening
     getMovieByIdOrName
 }

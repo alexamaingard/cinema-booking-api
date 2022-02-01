@@ -2,6 +2,7 @@ const express = require("express");
 const {
     getMovies,
     createMovie,
+    getMoviesByRuntime,
     //addScreening
     getMovieByIdOrName
 } = require('../controllers/movie');
@@ -9,14 +10,14 @@ const {
 const router = express.Router();
 
 router.get("/", getMovies);
-//movie?min=120
-//movie?lt=120
-//movie?gt=120
-//movie?lt=140&gt=120
+router.get("/runtime", getMoviesByRuntime);
+// /movie/runtime?min=120
+// /movie/runtime?lt=120
+// /movie/runtime?gt=120
+// /movie/runtime?lt=150&gt=120
 
 router.post("/create", createMovie);
 //router.put("/addScreening", addScreening);
-
 router.get("/:idOrName", getMovieByIdOrName);
 
 module.exports = router;
